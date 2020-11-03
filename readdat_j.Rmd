@@ -8,6 +8,7 @@ output: html_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
+library(lubridate)
 setwd("~/Desktop/STAT425/project/predictingcovid")
 ```
 
@@ -53,5 +54,12 @@ protests <- filter(
     & Date >= "2020-03-13"
     & Date <= "2020-10-20"
 )
+```
+
+```{r}
+HOME <- "/Users/jason/Desktop/STAT425/project/"
+
+test <- read_csv(str_c(HOME, "US_counties_COVID19_health_weather_data.csv"))
+julytest = test %>% filter(date > dmy("01-07-2020") & date < dmy("31-07-2020"))
 ```
 

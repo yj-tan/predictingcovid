@@ -6,11 +6,15 @@ Problem: We will predict new daily COVID-19 hospitalization cases in multiple Te
 
 Datasets: We chose to use a combination of datasets from Johns Hopkins, the New York Times, and Google’s Mobility Report. The Johns Hopkins data contains features such as the number of tests, deaths, and recovered cases as well as mortality and hospitalization rates. The New York Times data contains features describing the prevalence of mask wearing by county (split into proportion of population that responded “Never”, “Rarely”, “Sometimes”, “Frequently”, and “Always” to a survey). Finally, Google’s Mobility Report contains time series data on the percent change from baseline levels of visits to locations such as retail locations, grocery stores, and parks.
 
-JHU Data: https://github.com/CSSEGISandData/COVID-19 
+JHU Data: https://github.com/CSSEGISandData/COVID-19 (Taking 7 day average of July 21-27)
 NYT Mask Compliance Data: https://github.com/nytimes/covid-19-data 
 Google Mobility Data: https://www.google.com/covid19/mobility/ 
-Kaiser Family Foundation Control Policy Data: https://www.kff.org/coronavirus-covid-19/issue-brief/state-data-and-policy-actions-to-address-coronavirus/ 
+Population Density Data: https://github.com/camillol/cs424p3/blob/master/data/Population-Density%20By%20County.csv
 NOAA Climate Data: https://www.ncdc.noaa.gov/cdo-web/ 
+  Using this guy's notebook which has mapped counties to nearest weather station: https://www.kaggle.com/johnjdavisiv/us-counties-weather-health-covid19-data#header
 Protest and Demonstration Data: https://countlove.org/#guns 
+  Ended up not using because unreliable
+Kaiser Family Foundation Control Policy Data: https://www.kff.org/coronavirus-covid-19/issue-brief/state-data-and-policy-actions-to-address-coronavirus/ 
+  Ended up including through the notebook listed under NOAA above.
 
 Distribution & model: We intend to use Poisson regression, but anticipate possibly needing to switch to gamma or normal regression once we take a closer look at the data and check assumptions.
