@@ -43,23 +43,16 @@ mobility %<>%
         metro_area,
         iso_3166_2_code,
         date
-    )) %>%
-    summarise(across(.fns = ~ mean(na.omit(.x), na.rm = TRUE)))
-
-protests <- read.csv(PROTEST_PATH, colClasses = c("Date" = "Date"))
-protests <- filter(
-    protests,
-    (Event..legacy..see.tags. == "Racial Injustice"
-    | Event..legacy..see.tags. == "Civil Rights")
-    & Date >= "2020-03-13"
-    & Date <= "2020-10-20"
-)
+    )) 
+# %>%
+#     summarise(across(.fns = ~ mean(na.omit(.x), na.rm = TRUE)))
 ```
 
 ```{r}
 HOME <- "/Users/jason/Desktop/STAT425/project/"
 
 test <- read_csv(str_c(HOME, "US_counties_COVID19_health_weather_data.csv"))
-julytest = test %>% filter(date > dmy("01-07-2020") & date < dmy("31-07-2020"))
+julytest = test %>% filter(date > dmy("14-07-2020") & date < dmy("27-07-2020"))
+write_csv(julytest, "~/Desktop/STAT425/project/US_counties_COVID19_health_weather_data_julyonly.csv")
 ```
 
