@@ -29,7 +29,7 @@ mobility %<>%
         iso_3166_2_code,
         date
     )) %>%
-    summarise(across(.fns = ~ mean()))
+    summarise(across(.fns = ~ mean(na.omit(.x), na.rm = TRUE)))
 
 protests <- read.csv(PROTEST_PATH, colClasses = c("Date" = "Date"))
 protests <- filter(
