@@ -81,13 +81,36 @@ allcovars <- mask_use %>%
     inner_join(mobility, by=c("countyfips")) %>% 
     inner_join(sew, by=c("countyfips")) %>% 
     drop_na()
-# write_csv(allcovars, paste(HOME, COVARDATDIR, 'allcovars.csv', sep='/'))
+# write_csv(allcovars, paste(OVARDATDIR, 'allcovars.csv', sep='/'))
     
 ```
 
 Dealing with case JHU data
 
 ```{r}
-jhudfs <- lapply(list.files(JHU_PATH), function(x) read_csv(paste(JHU_PATH, x, sep='/')))
+jhu <- lapply(list.files(JHU_PATH), 
+                 function(x) 
+                     read_csv(paste(JHU_PATH, x, sep='/')) %>% 
+                     mutate(FIPS = as.factor(FIPS)) %>% 
+                     select(FIPS, Confirmed, Deaths) %>% 
+                     drop_na()
+                 ) %>% 
+    reduce(inner_join, by='FIPS') %>% 
+    mutate(
+        countyfips = FIPS,
+        mean_confirmed_7d_avg = rowSums(select(., contains("Confirmed"))) / 7, 
+        mean_deaths_7d_avg = rowSums(select(., contains("Deaths"))) / 7
+        ) %>% 
+    select(countyfips, mean_confirmed_7d_avg, mean_deaths_7d_avg)
+
+# write_csv(jhu, paste(JHUDATDIR, 'alljhu.csv', sep='/'))
 ```
+
+Combining JHU with covariates
+
+```{r}
+comb <- inner_join(jhu, allcovars, by='countyfips')
+# write_csv(comb, paste(HOME, 'combined.csv', sep='/'))
+```
+
 
