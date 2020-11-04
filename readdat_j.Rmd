@@ -11,19 +11,21 @@ library(tidyverse)
 library(lubridate)
 ```
 
-Reading data in
+Setting all paths to read data
 
 ```{r}
 HOME <- "~/Desktop/STAT425/project/predictingcovid"
 setwd(HOME)
-COVARDATDIR <- 'covardat'
-JHUDATDIR <- 'jhudat'
+COVARDATDIR <- paste(HOME, 'covardat', sep='/')
+JHUDATDIR <- paste(HOME, 'jhudat', sep='/')
 
-MASK_USE_PATH <- paste(HOME, COVARDATDIR, "mask-use-by-county.csv", sep='/')
-MOBILITY_PATH <- paste(HOME, COVARDATDIR, "2020_US_Region_Mobility_Report.csv", sep='/')
-SOCIECOWEATHER_PATH <- paste(HOME, COVARDATDIR, "US_counties_COVID19_health_weather_data_julyonly.csv", sep='/') # already filtered for july 15-26
-JHU_PATH <- paste(HOME, JHUDATDIR, sep='/')
+MASK_USE_PATH <- paste(COVARDATDIR, "mask-use-by-county.csv", sep='/')
+MOBILITY_PATH <- paste(COVARDATDIR, "2020_US_Region_Mobility_Report.csv", sep='/')
+SOCIECOWEATHER_PATH <- paste(COVARDATDIR, "US_counties_COVID19_health_weather_data_julyonly.csv", sep='/') # already filtered for july 15-26
+JHU_PATH <- paste(JHUDATDIR, sep='/')
 ```
+
+Dealing with all covariates
 
 ```{r}
 # all county fips code columns are named, "countyfips"
@@ -41,7 +43,6 @@ mobility <- read_csv(MOBILITY_PATH) %>%
         metro_area,
         iso_3166_2_code,
         date
-<<<<<<< HEAD
     )) %>% 
     # only keep informative data
     select(c(
@@ -56,12 +57,6 @@ mobility <- read_csv(MOBILITY_PATH) %>%
     mutate(countyfips = census_fips_code) %>% 
     select(-census_fips_code) %>% 
     select(countyfips, everything())
-=======
-    ))
-# %>%
-#     summarise(across(.fns = ~ mean(na.omit(.x), na.rm = TRUE)))
-```
->>>>>>> 2377f6c08b53de373f168b959329187266c62fff
 
 sew <- read_csv(SOCIECOWEATHER_PATH) %>% 
     select(fips, 
@@ -82,16 +77,17 @@ sew <- read_csv(SOCIECOWEATHER_PATH) %>%
     select(-fips) %>% 
     select(countyfips, everything())
 
-<<<<<<< HEAD
 allcovars <- mask_use %>% 
     inner_join(mobility, by=c("countyfips")) %>% 
     inner_join(sew, by=c("countyfips")) %>% 
     drop_na()
 # write_csv(allcovars, paste(HOME, COVARDATDIR, 'allcovars.csv', sep='/'))
     
-=======
-test <- read_csv(str_c(HOME, "US_counties_COVID19_health_weather_data.csv"))
-julytest <- test %>% filter(date > dmy("14-07-2020") & date < dmy("27-07-2020"))
-write_csv(julytest, "~/Desktop/STAT425/project/US_counties_COVID19_health_weather_data_julyonly.csv")
->>>>>>> 2377f6c08b53de373f168b959329187266c62fff
 ```
+
+Dealing with case JHU data
+
+```{r}
+jhudfs <- lapply(list.files(JHU_PATH), function(x) read_csv(paste(JHU_PATH, x, sep='/')))
+```
+
