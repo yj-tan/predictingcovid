@@ -9,32 +9,30 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 library(lubridate)
-setwd("~/Desktop/STAT425/project/predictingcovid")
 ```
 
 Reading data in
 
 ```{r}
-MASK_USE_PATH <- "mask-use-by-county.csv"
-MOBILITY_PATH <- "2020_US_Region_Mobility_Report.csv"
-PROTEST_PATH <- "protests.csv"
+HOME <- "~/Desktop/STAT425/project/predictingcovid"
+setwd(HOME)
+COVARDATDIR <- 'covardat'
+JHUDATDIR <- 'jhudat'
 
-mask_use <- read.csv(MASK_USE_PATH, colClasses = c("COUNTYFP" = "factor"))
+MASK_USE_PATH <- paste(HOME, COVARDATDIR, "mask-use-by-county.csv", sep='/')
+MOBILITY_PATH <- paste(HOME, COVARDATDIR, "2020_US_Region_Mobility_Report.csv", sep='/')
+SOCIECOWEATHER_PATH <- paste(HOME, COVARDATDIR, "US_counties_COVID19_health_weather_data_julyonly.csv", sep='/') # already filtered for july 15-26
+JHU_PATH <- paste(HOME, JHUDATDIR, sep='/')
+```
 
-mobility <- read.csv(MOBILITY_PATH,
-    colClasses = c(
-        "country_region_code" = "factor",
-        "country_region" = "factor",
-        "sub_region_1" = "factor",
-        "sub_region_2" = "factor",
-        "iso_3166_2_code" = "factor",
-        "census_fips_code" = "factor",
-        "date" = "Date"
-    )
-)
+```{r}
+# all county fips code columns are named, "countyfips"
 
-mobility %<>%
-    group_by(census_fips_code) %>%
+mask_use <- read_csv(MASK_USE_PATH) %>% 
+    mutate(never_rarely_mask = NEVER + RARELY, countyfips = COUNTYFP) %>%  # also converted name of fips code column for join
+    select(countyfips, never_rarely_mask)
+mobility <- read_csv(MOBILITY_PATH) %>% 
+    filter(!is.na(census_fips_code) & (date > dmy("06-07-2020")) & (date < dmy("20-07-2020"))) %>% 
     select(-c(
         country_region_code,
         country_region,
@@ -43,16 +41,44 @@ mobility %<>%
         metro_area,
         iso_3166_2_code,
         date
-    )) 
-# %>%
-#     summarise(across(.fns = ~ mean(na.omit(.x), na.rm = TRUE)))
+    )) %>% 
+    # only keep informative data
+    select(c(
+        census_fips_code,
+        retail_and_recreation_percent_change_from_baseline,
+        workplaces_percent_change_from_baseline
+    )) %>% 
+    filter(!is.na(retail_and_recreation_percent_change_from_baseline) & !is.na(workplaces_percent_change_from_baseline)) %>%  # can modify which mobility indicators to use later
+    group_by(census_fips_code) %>% 
+    summarise_if(is.numeric, mean, na.rm=T) %>% 
+    # convert name of fips code column for join
+    mutate(countyfips = census_fips_code) %>% 
+    select(-census_fips_code) %>% 
+    select(countyfips, everything())
+
+sew <- read_csv(SOCIECOWEATHER_PATH) %>% 
+    select(fips, 
+           stay_at_home_effective,
+           population_density_per_sqmi,
+           percent_uninsured,
+           percent_non_hispanic_white,
+           per_capita_income,
+           percent_65_and_over,
+           ELEV_M,
+           mean_temp_15d_avg) %>% 
+    mutate(stay_at_home = ifelse(stay_at_home_effective == 'yes', 1, 0)) %>% 
+    select(fips, stay_at_home, everything()) %>% 
+    group_by(fips) %>% 
+    summarise_if(is.numeric, mean, na.rm = T) %>% 
+    # convert name of fips code column for join
+    mutate(countyfips = fips) %>% 
+    select(-fips) %>% 
+    select(countyfips, everything())
+
+allcovars <- mask_use %>% 
+    inner_join(mobility, by=c("countyfips")) %>% 
+    inner_join(sew, by=c("countyfips")) %>% 
+    drop_na()
+# write_csv(allcovars, paste(HOME, COVARDATDIR, 'allcovars.csv', sep='/'))
+    
 ```
-
-```{r}
-HOME <- "/Users/jason/Desktop/STAT425/project/"
-
-test <- read_csv(str_c(HOME, "US_counties_COVID19_health_weather_data.csv"))
-julytest = test %>% filter(date > dmy("14-07-2020") & date < dmy("27-07-2020"))
-write_csv(julytest, "~/Desktop/STAT425/project/US_counties_COVID19_health_weather_data_julyonly.csv")
-```
-
