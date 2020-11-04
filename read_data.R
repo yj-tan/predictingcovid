@@ -1,8 +1,21 @@
 library("tidyverse")
 
-MASK_USE_PATH <- "mask-use-by-county.csv"
-MOBILITY_PATH <- "2020_US_Region_Mobility_Report.csv"
-PROTEST_PATH <- "protests.csv"
+MASK_USE_PATH <- "covardat/mask-use-by-county.csv"
+MOBILITY_PATH <- "covardat/2020_US_Region_Mobility_Report.csv"
+PROTEST_PATH <- "covardat/protests.csv"
+
+START_DATE <- "2020-07-21"
+END_DATE <- "2020-07-28"
+
+# Kaggle dataset
+
+# Percent uninsured, Percent non-white or Hispanic, 
+# Per capita income, Percent 65 and older,
+# Elevation, Mean 15 day temperature, Stay at home order (Y/n)
+
+# Our other datasets
+
+# Mask use, Population density, Mobility
 
 mask_use <- read.csv(MASK_USE_PATH,
     colClasses = c("COUNTYFP" = "factor")
@@ -24,8 +37,8 @@ mobility <- read.csv(MOBILITY_PATH,
 
 mobility %<>%
     filter(census_fips_code != ""
-    & date >= "2020-07-21"
-    & date <= "2020-07-27") %>%
+    & date >= START_DATE
+    & date <= END_DATE) %>%
     group_by(census_fips_code) %>%
     select(-c(
         country_region_code,
@@ -45,6 +58,6 @@ protests <- filter(
     protests,
     (Event..legacy..see.tags. == "Racial Injustice"
     | Event..legacy..see.tags. == "Civil Rights")
-    & Date >= "2020-07-21"
-    & Date <= "2020-07-27"
+    & Date >= START_DATE
+    & Date <= END_DATE
 )
