@@ -88,7 +88,8 @@ allcovars <- mask_use %>%
 Dealing with case JHU data
 
 ```{r}
-jhu <- lapply(list.files(JHU_PATH), 
+## JHU dat with only 7 days, even though directory has 8 days (used for computing differences)
+jhutotal <- lapply(list.files(JHU_PATH)[1:length(list.files(JHU_PATH)) - 1], 
                  function(x) 
                      read_csv(paste(JHU_PATH, x, sep='/')) %>% 
                      mutate(FIPS = as.factor(FIPS)) %>% 
@@ -98,19 +99,47 @@ jhu <- lapply(list.files(JHU_PATH),
     reduce(inner_join, by='FIPS') %>% 
     mutate(
         countyfips = FIPS,
-        mean_confirmed_7d_avg = rowSums(select(., contains("Confirmed"))) / 7, 
-        mean_deaths_7d_avg = rowSums(select(., contains("Deaths"))) / 7
+        mean_confirmed_7d_total = rowSums(select(., contains("Confirmed."))) / 7, 
+        mean_deaths_7d_total = rowSums(select(., contains("Deaths."))) / 7
         ) %>% 
-    select(countyfips, mean_confirmed_7d_avg, mean_deaths_7d_avg)
-
-# write_csv(jhu, paste(JHUDATDIR, 'alljhu.csv', sep='/'))
+    select(countyfips, mean_confirmed_7d_total, mean_deaths_7d_total)
+write_csv(jhutotal, paste(HOME, 'all_jhu_total.csv', sep='/'))
 ```
+
+```{r}
+jhudiff <- lapply(list.files(JHU_PATH), 
+                 function(x) 
+                     read_csv(paste(JHU_PATH, x, sep='/')) %>% 
+                     mutate(FIPS = as.factor(FIPS)) %>% 
+                     select(FIPS, Confirmed, Deaths) %>% 
+                     drop_na()
+                 ) %>% 
+    reduce(inner_join, by='FIPS') %>% 
+    mutate(
+        countyfips = FIPS,
+        # diffs
+        mean_confirmed_7d_diff = (Confirmed.y.y.y.y - Confirmed.x) / 7,
+        mean_deaths_7d_diff = (Deaths.y.y.y.y - Deaths.x) / 7,
+        ) %>%
+    select(countyfips, mean_confirmed_7d_diff, mean_deaths_7d_diff)
+write_csv(jhudiff, paste(HOME, 'all_jhu_diff.csv', sep='/'))
+```
+
+```{r}
+all_jhu_combined <- inner_join(jhutotal, jhudiff, by='countyfips')
+write_csv(all_jhu_combined, paste(HOME, 'all_jhu_combined.csv', sep='/'))
+```
+
 
 Combining JHU with covariates
 
 ```{r}
 comb <- inner_join(jhu, allcovars, by='countyfips')
 # write_csv(comb, paste(HOME, 'combined.csv', sep='/'))
+
+
+# weird number of increases
+
 ```
 
 
