@@ -167,3 +167,5 @@ dataset <- read_csv(
         mean_temp_15d_avg = col_double()
     )
 )
+
+dataset %<>% mutate(across(!starts_with("log_mean") & where(is.numeric), scale))
