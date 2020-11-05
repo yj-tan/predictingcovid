@@ -70,7 +70,7 @@ both_mask_mobility <-
         workplaces_percent_change_from_baseline,
         residential_percent_change_from_baseline
     ) %>%
-  drop_na()
+    drop_na()
 
 
 protests <- read.csv(PROTEST_PATH, colClasses = c("Date" = "Date"))
