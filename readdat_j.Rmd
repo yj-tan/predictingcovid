@@ -235,5 +235,23 @@ final_deaths <- clean %>%
 
 # saveRDS(final_cases, paste(HOME, 'final_logcases_dat.rds', sep='/'))
 # saveRDS(final_deaths, paste(HOME, 'final_logdeaths_dat.rds', sep='/'))
+# write_csv(final_cases, paste(HOME, 'final_logcases_dat.csv', sep='/'))
+# write_csv(final_deaths, paste(HOME, 'final_logdeaths_dat.csv', sep='/'))
+```
+
+
+# Playing around
+```{r}
+final_cases <- readRDS(paste(HOME, 'final_logcases_dat.rds', sep='/'))
+y = final_cases$log_mean_confirmed_7d_total
+X = final_cases %>% select(-log_mean_confirmed_7d_total) %>% mutate_if(is.numeric, scale)
+
+# final_deaths <- readRDS(paste(HOME, 'final_logdeaths_dat.rds', sep='/'))
+# y = final_deaths$log_mean_deaths_7d_total
+# X = final_deaths %>% select(-log_mean_deaths_7d_total) %>% mutate_if(is.numeric, scale)
+
+# plot(X)
+caselm <- lm(y~., X)
+summary(caselm)
 ```
 
