@@ -1,6 +1,7 @@
 library("tidyverse")
 
 COMBINED_CSV_PATH <- "all_combined.csv"
+CLEANED_COMBINED_PATH <- "cleaned_all_combined.csv"
 
 combined <- read_csv(
     file = COMBINED_CSV_PATH,
@@ -141,4 +142,28 @@ boxplot(
     x = combined$percent_non_hispanic_white,
     main = "Boxplot of Percent Non-Hispanic White",
     ylab = "Percent Non-Hispanic White"
+)
+
+# Cleaned data
+
+dataset <- read_csv(
+    file = CLEANED_COMBINED_PATH,
+    col_types = cols(
+        countyfips = col_factor(),
+        mean_confirmed_7d_total = col_double(),
+        mean_deaths_7d_total = col_double(),
+        mean_confirmed_7d_diff = col_double(),
+        mean_deaths_7d_diff = col_double(),
+        never_rarely_mask = col_double(),
+        retail_and_recreation_percent_change_from_baseline = col_double(),
+        workplaces_percent_change_from_baseline = col_double(),
+        stay_at_home = col_factor(),
+        population_density_per_sqmi = col_double(),
+        percent_uninsured = col_double(),
+        percent_non_hispanic_white = col_double(),
+        per_capita_income = col_double(),
+        percent_65_and_over = col_double(),
+        ELEV_M = col_double(),
+        mean_temp_15d_avg = col_double()
+    )
 )
