@@ -11,7 +11,7 @@ library(tidyverse)
 library(lubridate)
 ```
 
-Setting all paths to read data
+# Setting all paths to read data
 
 ```{r}
 HOME <- "~/Desktop/STAT425/project/predictingcovid"
@@ -103,7 +103,7 @@ jhutotal <- lapply(list.files(JHU_PATH)[1:length(list.files(JHU_PATH)) - 1],
         mean_deaths_7d_total = rowSums(select(., contains("Deaths."))) / 7
         ) %>% 
     select(countyfips, mean_confirmed_7d_total, mean_deaths_7d_total)
-write_csv(jhutotal, paste(HOME, 'all_jhu_total.csv', sep='/'))
+# write_csv(jhutotal, paste(HOME, 'all_jhu_total.csv', sep='/'))
 ```
 
 ```{r}
@@ -122,21 +122,81 @@ jhudiff <- lapply(list.files(JHU_PATH),
         mean_deaths_7d_diff = (Deaths.y.y.y.y - Deaths.x) / 7,
         ) %>%
     select(countyfips, mean_confirmed_7d_diff, mean_deaths_7d_diff)
-write_csv(jhudiff, paste(HOME, 'all_jhu_diff.csv', sep='/'))
+# write_csv(jhudiff, paste(HOME, 'all_jhu_diff.csv', sep='/'))
 ```
 
 ```{r}
 all_jhu_combined <- inner_join(jhutotal, jhudiff, by='countyfips')
-write_csv(all_jhu_combined, paste(HOME, 'all_jhu_combined.csv', sep='/'))
+# write_csv(all_jhu_combined, paste(HOME, 'all_jhu_combined.csv', sep='/'))
 ```
 
 
 Combining JHU with covariates
 
 ```{r}
-comb <- inner_join(jhu, allcovars, by='countyfips')
-# write_csv(comb, paste(HOME, 'combined.csv', sep='/'))
-
+comb <- inner_join(all_jhu_combined, allcovars, by='countyfips')
+# write_csv(comb, paste(HOME, 'all_combined.csv', sep='/'))
 ```
 
+
+
+# Start here for loading in all preprocessed data
+
+## EDA
+```{r}
+comb <- read_csv(paste(HOME, 'all_combined.csv', sep='/'), col_types=paste('c'))
+```
+
+
+```{r}
+dim(comb)
+colnames(comb)
+
+# confirmed cases
+hist(comb$mean_confirmed_7d_total)
+hist(log(comb$mean_confirmed_7d_total))
+summary(log(comb$mean_confirmed_7d_total))
+
+
+hist(comb$mean_confirmed_7d_diff)
+hist(log(comb$mean_confirmed_7d_diff + 16))
+summary(log(comb$mean_confirmed_7d_diff + 16))
+
+#deaths
+hist(comb$mean_deaths_7d_total)
+hist(log(comb$mean_deaths_7d_total+1))
+summary(log(comb$mean_deaths_7d_total+1))
+
+hist(log(comb$mean_deaths_7d_diff + 1.572))
+
+# good vars are the total case count means and total death count means. Diffs are bad. Death count is less variable.
+```
+
+```{r}
+boxplot(comb$per_capita_income)
+comb %>% filter(per_capita_income > 60000) # removing counties 51013, 51610
+
+
+boxplot(comb$percent_65_and_over)
+comb %>% filter(percent_65_and_over > 50) # remove 12119
+
+boxplot(comb$population_density_per_sqmi)
+comb %>% filter(population_density_per_sqmi > 7500) %>% select(countyfips, population_density_per_sqmi) # removing: 51510, 51013, 11001, 34017, 42101, 25025
+
+boxplot(comb$ELEV_M)
+comb %>% filter(ELEV_M > 2500) # removing 35039, 35043
+
+boxplot(comb$mean_temp_15d_avg)
+comb %>% filter(mean_temp_15d_avg > 95) # removing 32003
+```
+
+To remove: 
+48061, 13063, 48215, 48323, 35031, 48427, 48479, 51510, 51013, 11001, 34017, 42101, 25025, 34009, 26031, 37053, 37055, 55029, 39123, 24047, 51610, 48165, 48215, 51013, 51610, 12119, 51510, 51013, 11001, 34017, 42101, 25025, 35039, 35043, 32003
+
+```{r}
+fips2remove <- unique(c(48061, 13063, 48215, 48323, 35031, 48427, 48479, 51510, 51013, 11001, 34017, 42101, 25025, 34009, 26031, 37053, 37055, 55029, 39123, 24047, 51610, 48165, 48215, 51013, 51610, 12119, 51510, 51013, 11001, 34017, 42101, 25025, 35039, 35043, 32003))
+
+cleaned_comb <- comb %>% filter(!(countyfips %in% fips2remove))
+# write_csv(cleaned_comb, paste(HOME, 'cleaned_all_combined.csv', sep='/'))
+```
 
