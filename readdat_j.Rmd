@@ -137,9 +137,6 @@ Combining JHU with covariates
 comb <- inner_join(jhu, allcovars, by='countyfips')
 # write_csv(comb, paste(HOME, 'combined.csv', sep='/'))
 
-
-# weird number of increases
-
 ```
 
 
