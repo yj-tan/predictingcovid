@@ -16,13 +16,13 @@ library(lubridate)
 ```{r}
 HOME <- "~/Desktop/STAT425/project/predictingcovid"
 setwd(HOME)
-COVARDATDIR <- paste(HOME, 'covardat', sep='/')
-JHUDATDIR <- paste(HOME, 'jhudat', sep='/')
+COVARDATDIR <- paste(HOME, "covardat", sep = "/")
+JHUDATDIR <- paste(HOME, "jhudat", sep = "/")
 
-MASK_USE_PATH <- paste(COVARDATDIR, "mask-use-by-county.csv", sep='/')
-MOBILITY_PATH <- paste(COVARDATDIR, "2020_US_Region_Mobility_Report.csv", sep='/')
-SOCIECOWEATHER_PATH <- paste(COVARDATDIR, "US_counties_COVID19_health_weather_data_julyonly.csv", sep='/') # already filtered for july 15-26
-JHU_PATH <- paste(JHUDATDIR, sep='/')
+MASK_USE_PATH <- paste(COVARDATDIR, "mask-use-by-county.csv", sep = "/")
+MOBILITY_PATH <- paste(COVARDATDIR, "2020_US_Region_Mobility_Report.csv", sep = "/")
+SOCIECOWEATHER_PATH <- paste(COVARDATDIR, "US_counties_COVID19_health_weather_data_julyonly.csv", sep = "/") # already filtered for july 15-26
+JHU_PATH <- paste(JHUDATDIR, sep = "/")
 ```
 
 Dealing with all covariates
@@ -30,11 +30,11 @@ Dealing with all covariates
 ```{r}
 # all county fips code columns are named, "countyfips"
 
-mask_use <- read_csv(MASK_USE_PATH) %>% 
-    mutate(never_rarely_mask = NEVER + RARELY, countyfips = COUNTYFP) %>%  # also converted name of fips code column for join
+mask_use <- read_csv(MASK_USE_PATH) %>%
+    mutate(never_rarely_mask = NEVER + RARELY, countyfips = COUNTYFP) %>% # also converted name of fips code column for join
     select(countyfips, never_rarely_mask)
-mobility <- read_csv(MOBILITY_PATH) %>% 
-    filter(!is.na(census_fips_code) & (date > dmy("06-07-2020")) & (date < dmy("20-07-2020"))) %>% 
+mobility <- read_csv(MOBILITY_PATH) %>%
+    filter(!is.na(census_fips_code) & (date > dmy("06-07-2020")) & (date < dmy("20-07-2020"))) %>%
     select(-c(
         country_region_code,
         country_region,
@@ -43,90 +43,95 @@ mobility <- read_csv(MOBILITY_PATH) %>%
         metro_area,
         iso_3166_2_code,
         date
-    )) %>% 
+    )) %>%
     # only keep informative data
     select(c(
         census_fips_code,
         retail_and_recreation_percent_change_from_baseline,
         workplaces_percent_change_from_baseline
-    )) %>% 
-    filter(!is.na(retail_and_recreation_percent_change_from_baseline) & !is.na(workplaces_percent_change_from_baseline)) %>%  # can modify which mobility indicators to use later
-    group_by(census_fips_code) %>% 
-    summarise_if(is.numeric, mean, na.rm=T) %>% 
+    )) %>%
+    filter(!is.na(retail_and_recreation_percent_change_from_baseline) & !is.na(workplaces_percent_change_from_baseline)) %>% # can modify which mobility indicators to use later
+    group_by(census_fips_code) %>%
+    summarise_if(is.numeric, mean, na.rm = T) %>%
     # convert name of fips code column for join
-    mutate(countyfips = census_fips_code) %>% 
-    select(-census_fips_code) %>% 
+    mutate(countyfips = census_fips_code) %>%
+    select(-census_fips_code) %>%
     select(countyfips, everything())
 
-sew <- read_csv(SOCIECOWEATHER_PATH) %>% 
-    select(fips, 
-           stay_at_home_effective,
-           population_density_per_sqmi,
-           percent_uninsured,
-           percent_non_hispanic_white,
-           per_capita_income,
-           percent_65_and_over,
-           ELEV_M,
-           mean_temp_15d_avg) %>% 
-    mutate(stay_at_home = ifelse(stay_at_home_effective == 'yes', 1, 0)) %>% 
-    select(fips, stay_at_home, everything()) %>% 
-    group_by(fips) %>% 
-    summarise_if(is.numeric, mean, na.rm = T) %>% 
+sew <- read_csv(SOCIECOWEATHER_PATH) %>%
+    select(
+        fips,
+        stay_at_home_effective,
+        population_density_per_sqmi,
+        percent_uninsured,
+        percent_non_hispanic_white,
+        per_capita_income,
+        percent_65_and_over,
+        ELEV_M,
+        mean_temp_15d_avg
+    ) %>%
+    mutate(stay_at_home = ifelse(stay_at_home_effective == "yes", 1, 0)) %>%
+    select(fips, stay_at_home, everything()) %>%
+    group_by(fips) %>%
+    summarise_if(is.numeric, mean, na.rm = T) %>%
     # convert name of fips code column for join
-    mutate(countyfips = fips) %>% 
-    select(-fips) %>% 
+    mutate(countyfips = fips) %>%
+    select(-fips) %>%
     select(countyfips, everything())
 
-allcovars <- mask_use %>% 
-    inner_join(mobility, by=c("countyfips")) %>% 
-    inner_join(sew, by=c("countyfips")) %>% 
+allcovars <- mask_use %>%
+    inner_join(mobility, by = c("countyfips")) %>%
+    inner_join(sew, by = c("countyfips")) %>%
     drop_na()
 # write_csv(allcovars, paste(OVARDATDIR, 'allcovars.csv', sep='/'))
-    
 ```
 
 Dealing with case JHU data
 
 ```{r}
 ## JHU dat with only 7 days, even though directory has 8 days (used for computing differences)
-jhutotal <- lapply(list.files(JHU_PATH)[1:length(list.files(JHU_PATH)) - 1], 
-                 function(x) 
-                     read_csv(paste(JHU_PATH, x, sep='/')) %>% 
-                     mutate(FIPS = as.factor(FIPS)) %>% 
-                     select(FIPS, Confirmed, Deaths) %>% 
-                     drop_na()
-                 ) %>% 
-    reduce(inner_join, by='FIPS') %>% 
+jhutotal <- lapply(
+    list.files(JHU_PATH)[1:length(list.files(JHU_PATH)) - 1],
+    function(x) {
+          read_csv(paste(JHU_PATH, x, sep = "/")) %>%
+              mutate(FIPS = as.factor(FIPS)) %>%
+              select(FIPS, Confirmed, Deaths) %>%
+              drop_na()
+      }
+) %>%
+    reduce(inner_join, by = "FIPS") %>%
     mutate(
         countyfips = FIPS,
-        mean_confirmed_7d_total = rowSums(select(., contains("Confirmed."))) / 7, 
+        mean_confirmed_7d_total = rowSums(select(., contains("Confirmed."))) / 7,
         mean_deaths_7d_total = rowSums(select(., contains("Deaths."))) / 7
-        ) %>% 
+    ) %>%
     select(countyfips, mean_confirmed_7d_total, mean_deaths_7d_total)
 # write_csv(jhutotal, paste(HOME, 'all_jhu_total.csv', sep='/'))
 ```
 
 ```{r}
-jhudiff <- lapply(list.files(JHU_PATH), 
-                 function(x) 
-                     read_csv(paste(JHU_PATH, x, sep='/')) %>% 
-                     mutate(FIPS = as.factor(FIPS)) %>% 
-                     select(FIPS, Confirmed, Deaths) %>% 
-                     drop_na()
-                 ) %>% 
-    reduce(inner_join, by='FIPS') %>% 
+jhudiff <- lapply(
+    list.files(JHU_PATH),
+    function(x) {
+          read_csv(paste(JHU_PATH, x, sep = "/")) %>%
+              mutate(FIPS = as.factor(FIPS)) %>%
+              select(FIPS, Confirmed, Deaths) %>%
+              drop_na()
+      }
+) %>%
+    reduce(inner_join, by = "FIPS") %>%
     mutate(
         countyfips = FIPS,
         # diffs
         mean_confirmed_7d_diff = (Confirmed.y.y.y.y - Confirmed.x) / 7,
         mean_deaths_7d_diff = (Deaths.y.y.y.y - Deaths.x) / 7,
-        ) %>%
+    ) %>%
     select(countyfips, mean_confirmed_7d_diff, mean_deaths_7d_diff)
 # write_csv(jhudiff, paste(HOME, 'all_jhu_diff.csv', sep='/'))
 ```
 
 ```{r}
-all_jhu_combined <- inner_join(jhutotal, jhudiff, by='countyfips')
+all_jhu_combined <- inner_join(jhutotal, jhudiff, by = "countyfips")
 # write_csv(all_jhu_combined, paste(HOME, 'all_jhu_combined.csv', sep='/'))
 ```
 
@@ -134,7 +139,7 @@ all_jhu_combined <- inner_join(jhutotal, jhudiff, by='countyfips')
 Combining JHU with covariates
 
 ```{r}
-comb <- inner_join(all_jhu_combined, allcovars, by='countyfips')
+comb <- inner_join(all_jhu_combined, allcovars, by = "countyfips")
 # write_csv(comb, paste(HOME, 'all_combined.csv', sep='/'))
 ```
 
@@ -144,7 +149,7 @@ comb <- inner_join(all_jhu_combined, allcovars, by='countyfips')
 
 ## EDA
 ```{r}
-comb <- read_csv(paste(HOME, 'all_combined.csv', sep='/'), col_types=paste('c'))
+comb <- read_csv(paste(HOME, "all_combined.csv", sep = "/"), col_types = paste("c"))
 ```
 
 
@@ -162,10 +167,10 @@ hist(comb$mean_confirmed_7d_diff)
 hist(log(comb$mean_confirmed_7d_diff + 16))
 summary(log(comb$mean_confirmed_7d_diff + 16))
 
-#deaths
+# deaths
 hist(comb$mean_deaths_7d_total)
-hist(log(comb$mean_deaths_7d_total+1))
-summary(log(comb$mean_deaths_7d_total+1))
+hist(log(comb$mean_deaths_7d_total + 1))
+summary(log(comb$mean_deaths_7d_total + 1))
 
 hist(log(comb$mean_deaths_7d_diff + 1.572))
 
@@ -181,7 +186,9 @@ boxplot(comb$percent_65_and_over)
 comb %>% filter(percent_65_and_over > 50) # remove 12119
 
 boxplot(comb$population_density_per_sqmi)
-comb %>% filter(population_density_per_sqmi > 7500) %>% select(countyfips, population_density_per_sqmi) # removing: 51510, 51013, 11001, 34017, 42101, 25025
+comb %>%
+    filter(population_density_per_sqmi > 7500) %>%
+    select(countyfips, population_density_per_sqmi) # removing: 51510, 51013, 11001, 34017, 42101, 25025
 
 boxplot(comb$ELEV_M)
 comb %>% filter(ELEV_M > 2500) # removing 35039, 35043
@@ -203,34 +210,34 @@ cleaned_comb <- comb %>% filter(!(countyfips %in% fips2remove))
 # Scaling and final tweaking to produce clean, ready to go .csv files
 
 ```{r}
-clean <- read_csv(paste(HOME, 'cleaned_all_combined.csv', sep='/'), 
-                  col_types = cols(
-                        countyfips = col_factor(),
-                        mean_confirmed_7d_total = col_double(),
-                        mean_deaths_7d_total = col_double(),
-                        mean_confirmed_7d_diff = col_double(),
-                        mean_deaths_7d_diff = col_double(),
-                        never_rarely_mask = col_double(),
-                        retail_and_recreation_percent_change_from_baseline = col_double(),
-                        workplaces_percent_change_from_baseline = col_double(),
-                        stay_at_home = col_factor(),
-                        population_density_per_sqmi = col_double(),
-                        percent_uninsured = col_double(),
-                        percent_non_hispanic_white = col_double(),
-                        per_capita_income = col_double(),
-                        percent_65_and_over = col_double(),
-                        ELEV_M = col_double(),
-                        mean_temp_15d_avg = col_double()
-                        )
-                  )
-final_cases <- clean %>% 
-    mutate(log_mean_confirmed_7d_total = log(mean_confirmed_7d_total)) %>% 
-    select(-c(countyfips, mean_confirmed_7d_total, mean_confirmed_7d_diff, mean_deaths_7d_diff, mean_deaths_7d_total)) %>% 
+clean <- read_csv(paste(HOME, "cleaned_all_combined.csv", sep = "/"),
+    col_types = cols(
+        countyfips = col_factor(),
+        mean_confirmed_7d_total = col_double(),
+        mean_deaths_7d_total = col_double(),
+        mean_confirmed_7d_diff = col_double(),
+        mean_deaths_7d_diff = col_double(),
+        never_rarely_mask = col_double(),
+        retail_and_recreation_percent_change_from_baseline = col_double(),
+        workplaces_percent_change_from_baseline = col_double(),
+        stay_at_home = col_factor(),
+        population_density_per_sqmi = col_double(),
+        percent_uninsured = col_double(),
+        percent_non_hispanic_white = col_double(),
+        per_capita_income = col_double(),
+        percent_65_and_over = col_double(),
+        ELEV_M = col_double(),
+        mean_temp_15d_avg = col_double()
+    )
+)
+final_cases <- clean %>%
+    mutate(log_mean_confirmed_7d_total = log(mean_confirmed_7d_total)) %>%
+    select(-c(countyfips, mean_confirmed_7d_total, mean_confirmed_7d_diff, mean_deaths_7d_diff, mean_deaths_7d_total)) %>%
     select(log_mean_confirmed_7d_total, everything())
 
-final_deaths <- clean %>% 
-    mutate(log_mean_deaths_7d_total = log(mean_deaths_7d_total + 1)) %>% 
-    select(-c(countyfips, mean_confirmed_7d_total, mean_confirmed_7d_diff, mean_deaths_7d_diff, mean_deaths_7d_total)) %>% 
+final_deaths <- clean %>%
+    mutate(log_mean_deaths_7d_total = log(mean_deaths_7d_total + 1)) %>%
+    select(-c(countyfips, mean_confirmed_7d_total, mean_confirmed_7d_diff, mean_deaths_7d_diff, mean_deaths_7d_total)) %>%
     select(log_mean_deaths_7d_total, everything())
 
 # saveRDS(final_cases, paste(HOME, 'final_logcases_dat.rds', sep='/'))
@@ -242,16 +249,18 @@ final_deaths <- clean %>%
 
 # Playing around
 ```{r}
-final_cases <- readRDS(paste(HOME, 'final_logcases_dat.rds', sep='/'))
-y = final_cases$log_mean_confirmed_7d_total
-X = final_cases %>% select(-log_mean_confirmed_7d_total) %>% mutate_if(is.numeric, scale)
+final_cases <- readRDS(paste(HOME, "final_logcases_dat.rds", sep = "/"))
+y <- final_cases$log_mean_confirmed_7d_total
+X <- final_cases %>%
+    select(-log_mean_confirmed_7d_total) %>%
+    mutate_if(is.numeric, scale)
 
 # final_deaths <- readRDS(paste(HOME, 'final_logdeaths_dat.rds', sep='/'))
 # y = final_deaths$log_mean_deaths_7d_total
 # X = final_deaths %>% select(-log_mean_deaths_7d_total) %>% mutate_if(is.numeric, scale)
 
 # plot(X)
-caselm <- lm(y~., X)
+caselm <- lm(y ~ ., X)
 summary(caselm)
 ```
 
