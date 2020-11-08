@@ -252,6 +252,6 @@ X = final_cases %>% select(-log_mean_confirmed_7d_total) %>% mutate_if(is.numeri
 
 # plot(X)
 caselm <- lm(y~., X)
-summary(caselm)
+summary(caselm) # misisng # of tests conducted
 ```
 
