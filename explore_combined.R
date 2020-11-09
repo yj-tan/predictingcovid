@@ -31,8 +31,11 @@ hist(
     x = log(combined$mean_confirmed_7d_total),
     main = "Histogram of Log Mean Confirmed 7 Day Total",
     xlab = "log of Mean Confirmed 7 Day Total",
-    freq = F
+    freq = F,
+    breaks = seq(min(log(combined$mean_confirmed_7d_total)) - 1, max(log(combined$mean_confirmed_7d_total)) + 1, 0.3),
+    cex.lab=1.5, cex.axis=1.5, cex.main=1.5, cex.sub=1.5
 )
+lines(density(log(combined$mean_confirmed_7d_total)), col = "blue", lwd = 2)
 
 boxplot(
     x = log(combined$mean_deaths_7d_total),
