@@ -10,6 +10,7 @@ knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 library(lubridate)
 library(BAS)
+library(mgcv)
 ```
 
 
@@ -62,6 +63,15 @@ final_deaths <- clean %>%
 # saveRDS(final_deaths, paste(HOME, 'final_logdeaths_dat.rds', sep='/'))
 # write_csv(final_cases, paste(HOME, 'final_logcases_dat.csv', sep='/'))
 # write_csv(final_deaths, paste(HOME, 'final_logdeaths_dat.csv', sep='/'))
+
+final_diff_cases <- clean %>% 
+  filter(mean_confirmed_7d_diff > -1) %>% 
+  filter(log(mean_confirmed_7d_diff + 1) < 7) %>% 
+  mutate(log_mean_confirmed_7d_diff = log(mean_confirmed_7d_diff+1)) %>% 
+  select(-c(countyfips, mean_confirmed_7d_total, mean_confirmed_7d_diff, mean_deaths_7d_diff, mean_deaths_7d_total)) %>% 
+  select(log_mean_confirmed_7d_diff, everything())
+# saveRDS(final_diff_cases, paste(HOME, 'final_logdiffcases_dat.rds', sep='/'))
+# write_csv(final_diff_cases, paste(HOME, 'final_logdiffcases_dat.csv', sep='/'))
 ```
 
 
@@ -79,4 +89,98 @@ X = final_cases %>% select(-log_mean_confirmed_7d_total) %>% mutate_if(is.numeri
 caselm <- lm(y~., X)
 summary(caselm) # misisng # of tests conducted
 ```
+
+```{r}
+LOG_RDS_CASES_PATH <- "final_logcases_dat.rds"
+N_MODELS <- 5000
+
+dataset <-
+    readRDS(LOG_RDS_CASES_PATH) %>%
+    mutate(log_population_density_per_sqmi = log(population_density_per_sqmi)) %>% # log transform population density and remove the non-log transformed one
+    select(-population_density_per_sqmi) %>%
+    mutate(across(!starts_with("log_mean") & where(is.numeric), scale)) # scale
+
+# basic bas and lm's
+basic_lm <- lm(log_mean_confirmed_7d_total ~ ., dataset)
+# unscaled_basic_lm <- lm(log_mean_confirmed_7d_total ~ ., unscaled) #SCALE UR DATA
+
+basic_bas <- bas.lm(
+    formula = log_mean_confirmed_7d_total ~ .,
+    data = dataset,
+    method = "MCMC",
+    prior = "JZS",
+    update = 100,
+    n.models = N_MODELS
+)
+
+# poly & interaction bas and lm's
+poly_lm <- lm(
+    formula = log_mean_confirmed_7d_total ~ poly(never_rarely_mask, 3)
+    + poly(retail_and_recreation_percent_change_from_baseline, 3)
+    + poly(workplaces_percent_change_from_baseline, 3)
+    + poly(percent_uninsured, 3) 
+    + poly(percent_non_hispanic_white, 3)
+    + poly(per_capita_income, 3) 
+    + poly(percent_65_and_over, 3)
+    + poly(ELEV_M, 3) 
+    + poly(mean_temp_15d_avg, 3)
+    # + retail_and_recreation_percent_change_from_baseline:workplaces_percent_change_from_baseline
+    + stay_at_home + log_population_density_per_sqmi,
+    data = dataset,
+)
+
+poly_lm <- lm(
+    formula = log_mean_confirmed_7d_total ~ poly(never_rarely_mask, 3)
+    + poly(retail_and_recreation_percent_change_from_baseline, 3)
+    + poly(workplaces_percent_change_from_baseline, 3)
+    + poly(percent_uninsured, 3) 
+    + poly(percent_non_hispanic_white, 3)
+    + poly(per_capita_income, 3) 
+    + poly(percent_65_and_over, 3)
+    + poly(ELEV_M, 3) 
+    + poly(mean_temp_15d_avg, 3)
+    # + retail_and_recreation_percent_change_from_baseline:workplaces_percent_change_from_baseline
+    + .^2, # encodes all interaction terms
+    data = dataset,
+)
+
+poly_bas <- bas.lm(
+    formula = log_mean_confirmed_7d_total ~ poly(never_rarely_mask, 3)
+    + poly(retail_and_recreation_percent_change_from_baseline, 3)
+    + poly(workplaces_percent_change_from_baseline, 3)
+    + poly(percent_uninsured, 3) 
+    + poly(percent_non_hispanic_white, 3)
+    + poly(per_capita_income, 3) 
+    + poly(percent_65_and_over, 3)
+    + poly(ELEV_M, 3) 
+    + poly(mean_temp_15d_avg, 3)
+    + .^2,
+    data = dataset,
+    method = "MCMC",
+    prior = "JZS",
+    update = 100,
+    n.models = N_MODELS
+)
+
+# diff prior bas's ### not using gprior
+# gprior_bas <- bas.lm(
+#     formula = log_mean_confirmed_7d_total ~ poly(never_rarely_mask, 3)
+#     + poly(retail_and_recreation_percent_change_from_baseline, 3)
+#     + poly(workplaces_percent_change_from_baseline, 3)
+#     + poly(percent_uninsured, 3) 
+#     + poly(percent_non_hispanic_white, 3)
+#     + poly(per_capita_income, 3) 
+#     + poly(percent_65_and_over, 3)
+#     + poly(ELEV_M, 3) 
+#     + poly(mean_temp_15d_avg, 3)
+#     + stay_at_home + log_population_density_per_sqmi,
+#     data = dataset,
+#     method = "MCMC",
+#     prior = "g-prior",
+#     alpha = 4,
+#     update = 100,
+#     n.models = N_MODELS
+# )
+```
+
 
