@@ -51,7 +51,7 @@ inits <- list(
     tau = 10
 )
 
-model <- jags.model(JAGS_MODEL_PATH, data = jags_data, inits = inits, n.chains = 2, quiet = F)
+model <- jags.model(JAGS_MODEL_PATH, data = jags_data, inits = inits, n.chains = 10, quiet = F)
 
 update(model, 10000, progress.bar = "text")
 
@@ -64,9 +64,9 @@ params <- c(
 samples <- coda.samples(
     model,
     variable.names = params,
-    n.iter = 20000, progress.bar = "text"
+    n.iter = 30000, progress.bar = "text"
 )
 
-summary(samples)
+# summary(samples)
 
-plot(samples)
+# plot(samples)
