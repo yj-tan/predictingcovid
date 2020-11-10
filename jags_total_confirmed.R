@@ -73,6 +73,17 @@ samples <- coda.samples(
     n.iter = 30000, progress.bar = "text"
 )
 
+qt <- data.table::setDT(as.data.frame(summary(samples)$quantiles), keep.rownames = "coeff")
+
+ggplot(qt, aes(x = coeff, y = `50%`)) +
+    geom_point(size = 4) +
+    geom_errorbar(aes(ymax = `97.5%`, ymin = `2.5%`)) +
+    ggtitle("Confidence intervals for JAGS total confirmed cases") +
+    xlab("Estimated Coefficient") +
+    ylab("Value") +
+    theme_bw() +
+    theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
+
 # summary(samples)
 
 # plot(samples)
