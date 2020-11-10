@@ -15,20 +15,20 @@ response <- diff_dataset2$log_mean_confirmed_7d_diff
 
 predictors <- as.matrix(
     model.matrix(
-        log_mean_confirmed_7d_diff ~ 
-            I(never_rarely_mask^2)
+        log_mean_confirmed_7d_diff ~
+        I(never_rarely_mask^2)
         + I(never_rarely_mask^3)
-        + workplaces_percent_change_from_baseline
-        + log_mean_confirmed_7d_total
-        + I(percent_non_hispanic_white^2)
-        + I(mean_temp_15d_avg^2)
-        + log_mean_confirmed_7d_total:workplaces_percent_change_from_baseline
-        + log_mean_confirmed_7d_total:percent_uninsured
-        + log_mean_confirmed_7d_total:mean_temp_15d_avg
-        + stay_at_home:ELEV_M
-        + percent_uninsured:percent_65_and_over
-        + percent_uninsured:ELEV_M
-        + log_population_density_per_sqmi:percent_non_hispanic_white,
+            + workplaces_percent_change_from_baseline
+            + log_mean_confirmed_7d_total
+            + I(percent_non_hispanic_white^2)
+            + I(mean_temp_15d_avg^2)
+            + log_mean_confirmed_7d_total:workplaces_percent_change_from_baseline
+            + log_mean_confirmed_7d_total:percent_uninsured
+            + log_mean_confirmed_7d_total:mean_temp_15d_avg
+            + stay_at_home:ELEV_M
+            + percent_uninsured:percent_65_and_over
+            + percent_uninsured:ELEV_M
+            + log_population_density_per_sqmi:percent_non_hispanic_white,
         data = diff_dataset2
     )[, -1]
 )
@@ -41,23 +41,20 @@ jags_data <- list(
 
 init_lm <- lm(
     log_mean_confirmed_7d_diff ~
-        poly(never_rarely_mask, 2)
-    + I(retail_and_recreation_percent_change_from_baseline^3)
-    + poly(workplaces_percent_change_from_baseline, 3)
-    + stay_at_home
-    + log_population_density_per_sqmi
-    + percent_uninsured
-    + poly(percent_non_hispanic_white, 3)
-    + I(per_capita_income^2)
-    + percent_65_and_over
-    + I(ELEV_M^3) # poly(ELEV_M, 3)
-    + workplaces_percent_change_from_baseline:percent_non_hispanic_white
-    + percent_uninsured:percent_65_and_over
-    + per_capita_income:mean_temp_15d_avg
-    + log_population_density_per_sqmi:percent_uninsured
-    + log_population_density_per_sqmi:percent_non_hispanic_white
-    + log_population_density_per_sqmi:per_capita_income,
-    data = diff_dataset
+    I(never_rarely_mask^2)
+    + I(never_rarely_mask^3)
+        + workplaces_percent_change_from_baseline
+        + log_mean_confirmed_7d_total
+        + I(percent_non_hispanic_white^2)
+        + I(mean_temp_15d_avg^2)
+        + log_mean_confirmed_7d_total:workplaces_percent_change_from_baseline
+        + log_mean_confirmed_7d_total:percent_uninsured
+        + log_mean_confirmed_7d_total:mean_temp_15d_avg
+        + stay_at_home:ELEV_M
+        + percent_uninsured:percent_65_and_over
+        + percent_uninsured:ELEV_M
+        + log_population_density_per_sqmi:percent_non_hispanic_white,
+    data = diff_dataset2
 )
 
 beta_inits <- replace_na(init_lm$coefficients[-1], 0.1)
@@ -76,3 +73,14 @@ samples <- coda.samples(
     variable.names = params,
     n.iter = 30000, progress.bar = "text"
 )
+
+qt <- data.table::setDT(as.data.frame(summary(samples)$quantiles), keep.rownames = "coeff")
+
+ggplot(qt, aes(x = coeff, y = `50%`)) +
+    geom_point(size = 4) +
+    geom_errorbar(aes(ymax = `97.5%`, ymin = `2.5%`)) +
+    ggtitle("Confidence intervals for JAGS difference in confirmed cases + new predictor") +
+    xlab("Estimated Coefficient") +
+    ylab("Value") +
+    theme_bw() +
+    theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))

@@ -73,8 +73,10 @@ final_diff_cases <- clean %>%
 final_diff_cases2 <- clean %>%
     filter(mean_confirmed_7d_diff > -1) %>%
     filter(log(mean_confirmed_7d_diff + 1) < 7) %>%
-    mutate(log_mean_confirmed_7d_diff = log(mean_confirmed_7d_diff + 1),
-           log_mean_confirmed_7d_total = log(mean_confirmed_7d_total)) %>%
+    mutate(
+        log_mean_confirmed_7d_diff = log(mean_confirmed_7d_diff + 1),
+        log_mean_confirmed_7d_total = log(mean_confirmed_7d_total)
+    ) %>%
     select(-c(countyfips, mean_confirmed_7d_total, mean_confirmed_7d_diff, mean_deaths_7d_diff, mean_deaths_7d_total)) %>%
     select(log_mean_confirmed_7d_diff, log_mean_confirmed_7d_total, everything())
 # saveRDS(final_diff_cases, paste(HOME, 'final_logdiffcases_dat.rds', sep='/'))
