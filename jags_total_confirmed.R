@@ -22,8 +22,8 @@ predictors <- as.matrix(
             + poly(percent_non_hispanic_white, 3)
             + percent_65_and_over
             + stay_at_home:percent_uninsured
-            + stay_at_home:I(percent_non_hispanic_white^3)
-            + percent_uninsured:I(percent_non_hispanic_white^3)
+            + stay_at_home:percent_non_hispanic_white
+            + percent_uninsured:percent_non_hispanic_white
             + percent_non_hispanic_white:percent_65_and_over
             + log_population_density_per_sqmi:per_capita_income
             + percent_65_and_over:mean_temp_15d_avg
@@ -47,8 +47,8 @@ init_lm <- lm(
         + poly(percent_non_hispanic_white, 3)
         + percent_65_and_over
         + stay_at_home:percent_uninsured
-        + stay_at_home:I(percent_non_hispanic_white^3)
-        + percent_uninsured:I(percent_non_hispanic_white^3)
+        + stay_at_home:percent_non_hispanic_white
+        + percent_uninsured:percent_non_hispanic_white
         + percent_non_hispanic_white:percent_65_and_over
         + log_population_density_per_sqmi:per_capita_income
         + percent_65_and_over:mean_temp_15d_avg
