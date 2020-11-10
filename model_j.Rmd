@@ -17,46 +17,46 @@ library(mgcv)
 ```{r}
 HOME <- "~/Desktop/STAT425/project/predictingcovid"
 setwd(HOME)
-COVARDATDIR <- paste(HOME, 'covardat', sep='/')
-JHUDATDIR <- paste(HOME, 'jhudat', sep='/')
+COVARDATDIR <- paste(HOME, "covardat", sep = "/")
+JHUDATDIR <- paste(HOME, "jhudat", sep = "/")
 
-MASK_USE_PATH <- paste(COVARDATDIR, "mask-use-by-county.csv", sep='/')
-MOBILITY_PATH <- paste(COVARDATDIR, "2020_US_Region_Mobility_Report.csv", sep='/')
-SOCIECOWEATHER_PATH <- paste(COVARDATDIR, "US_counties_COVID19_health_weather_data_julyonly.csv", sep='/') # already filtered for july 15-26
-JHU_PATH <- paste(JHUDATDIR, sep='/')
+MASK_USE_PATH <- paste(COVARDATDIR, "mask-use-by-county.csv", sep = "/")
+MOBILITY_PATH <- paste(COVARDATDIR, "2020_US_Region_Mobility_Report.csv", sep = "/")
+SOCIECOWEATHER_PATH <- paste(COVARDATDIR, "US_counties_COVID19_health_weather_data_julyonly.csv", sep = "/") # already filtered for july 15-26
+JHU_PATH <- paste(JHUDATDIR, sep = "/")
 ```
 
 # Scaling and final tweaking to produce clean, ready to go .csv files and .rds files for easy loading
 
 ```{r}
-clean <- read_csv(paste(HOME, 'cleaned_all_combined.csv', sep='/'), 
-                  col_types = cols(
-                        countyfips = col_factor(),
-                        mean_confirmed_7d_total = col_double(),
-                        mean_deaths_7d_total = col_double(),
-                        mean_confirmed_7d_diff = col_double(),
-                        mean_deaths_7d_diff = col_double(),
-                        never_rarely_mask = col_double(),
-                        retail_and_recreation_percent_change_from_baseline = col_double(),
-                        workplaces_percent_change_from_baseline = col_double(),
-                        stay_at_home = col_factor(),
-                        population_density_per_sqmi = col_double(),
-                        percent_uninsured = col_double(),
-                        percent_non_hispanic_white = col_double(),
-                        per_capita_income = col_double(),
-                        percent_65_and_over = col_double(),
-                        ELEV_M = col_double(),
-                        mean_temp_15d_avg = col_double()
-                        )
-                  )
-final_cases <- clean %>% 
-    mutate(log_mean_confirmed_7d_total = log(mean_confirmed_7d_total)) %>% 
-    select(-c(countyfips, mean_confirmed_7d_total, mean_confirmed_7d_diff, mean_deaths_7d_diff, mean_deaths_7d_total)) %>% 
+clean <- read_csv(paste(HOME, "cleaned_all_combined.csv", sep = "/"),
+    col_types = cols(
+        countyfips = col_factor(),
+        mean_confirmed_7d_total = col_double(),
+        mean_deaths_7d_total = col_double(),
+        mean_confirmed_7d_diff = col_double(),
+        mean_deaths_7d_diff = col_double(),
+        never_rarely_mask = col_double(),
+        retail_and_recreation_percent_change_from_baseline = col_double(),
+        workplaces_percent_change_from_baseline = col_double(),
+        stay_at_home = col_factor(),
+        population_density_per_sqmi = col_double(),
+        percent_uninsured = col_double(),
+        percent_non_hispanic_white = col_double(),
+        per_capita_income = col_double(),
+        percent_65_and_over = col_double(),
+        ELEV_M = col_double(),
+        mean_temp_15d_avg = col_double()
+    )
+)
+final_cases <- clean %>%
+    mutate(log_mean_confirmed_7d_total = log(mean_confirmed_7d_total)) %>%
+    select(-c(countyfips, mean_confirmed_7d_total, mean_confirmed_7d_diff, mean_deaths_7d_diff, mean_deaths_7d_total)) %>%
     select(log_mean_confirmed_7d_total, everything())
 
-final_deaths <- clean %>% 
-    mutate(log_mean_deaths_7d_total = log(mean_deaths_7d_total + 1)) %>% 
-    select(-c(countyfips, mean_confirmed_7d_total, mean_confirmed_7d_diff, mean_deaths_7d_diff, mean_deaths_7d_total)) %>% 
+final_deaths <- clean %>%
+    mutate(log_mean_deaths_7d_total = log(mean_deaths_7d_total + 1)) %>%
+    select(-c(countyfips, mean_confirmed_7d_total, mean_confirmed_7d_diff, mean_deaths_7d_diff, mean_deaths_7d_total)) %>%
     select(log_mean_deaths_7d_total, everything())
 
 # saveRDS(final_cases, paste(HOME, 'final_logcases_dat.rds', sep='/'))
@@ -64,12 +64,12 @@ final_deaths <- clean %>%
 # write_csv(final_cases, paste(HOME, 'final_logcases_dat.csv', sep='/'))
 # write_csv(final_deaths, paste(HOME, 'final_logdeaths_dat.csv', sep='/'))
 
-final_diff_cases <- clean %>% 
-  filter(mean_confirmed_7d_diff > -1) %>% 
-  filter(log(mean_confirmed_7d_diff + 1) < 7) %>% 
-  mutate(log_mean_confirmed_7d_diff = log(mean_confirmed_7d_diff+1)) %>% 
-  select(-c(countyfips, mean_confirmed_7d_total, mean_confirmed_7d_diff, mean_deaths_7d_diff, mean_deaths_7d_total)) %>% 
-  select(log_mean_confirmed_7d_diff, everything())
+final_diff_cases <- clean %>%
+    filter(mean_confirmed_7d_diff > -1) %>%
+    filter(log(mean_confirmed_7d_diff + 1) < 7) %>%
+    mutate(log_mean_confirmed_7d_diff = log(mean_confirmed_7d_diff + 1)) %>%
+    select(-c(countyfips, mean_confirmed_7d_total, mean_confirmed_7d_diff, mean_deaths_7d_diff, mean_deaths_7d_total)) %>%
+    select(log_mean_confirmed_7d_diff, everything())
 # saveRDS(final_diff_cases, paste(HOME, 'final_logdiffcases_dat.rds', sep='/'))
 # write_csv(final_diff_cases, paste(HOME, 'final_logdiffcases_dat.csv', sep='/'))
 ```
@@ -77,16 +77,18 @@ final_diff_cases <- clean %>%
 
 # Playing around
 ```{r}
-final_cases <- readRDS(paste(HOME, 'final_logcases_dat.rds', sep='/'))
-y = final_cases$log_mean_confirmed_7d_total
-X = final_cases %>% select(-log_mean_confirmed_7d_total) %>% mutate_if(is.numeric, scale)
+final_cases <- readRDS(paste(HOME, "final_logcases_dat.rds", sep = "/"))
+y <- final_cases$log_mean_confirmed_7d_total
+X <- final_cases %>%
+    select(-log_mean_confirmed_7d_total) %>%
+    mutate_if(is.numeric, scale)
 
 # final_deaths <- readRDS(paste(HOME, 'final_logdeaths_dat.rds', sep='/'))
 # y = final_deaths$log_mean_deaths_7d_total
 # X = final_deaths %>% select(-log_mean_deaths_7d_total) %>% mutate_if(is.numeric, scale)
 
 # plot(X)
-caselm <- lm(y~., X)
+caselm <- lm(y ~ ., X)
 summary(caselm) # misisng # of tests conducted
 ```
 
@@ -117,44 +119,44 @@ basic_bas <- bas.lm(
 poly_lm <- lm(
     formula = log_mean_confirmed_7d_total ~ poly(never_rarely_mask, 3)
     + poly(retail_and_recreation_percent_change_from_baseline, 3)
-    + poly(workplaces_percent_change_from_baseline, 3)
-    + poly(percent_uninsured, 3) 
-    + poly(percent_non_hispanic_white, 3)
-    + poly(per_capita_income, 3) 
-    + poly(percent_65_and_over, 3)
-    + poly(ELEV_M, 3) 
-    + poly(mean_temp_15d_avg, 3)
-    # + retail_and_recreation_percent_change_from_baseline:workplaces_percent_change_from_baseline
-    + stay_at_home + log_population_density_per_sqmi,
+        + poly(workplaces_percent_change_from_baseline, 3)
+        + poly(percent_uninsured, 3)
+        + poly(percent_non_hispanic_white, 3)
+        + poly(per_capita_income, 3)
+        + poly(percent_65_and_over, 3)
+        + poly(ELEV_M, 3)
+        + poly(mean_temp_15d_avg, 3)
+        # + retail_and_recreation_percent_change_from_baseline:workplaces_percent_change_from_baseline
+        + stay_at_home + log_population_density_per_sqmi,
     data = dataset,
 )
 
 poly_lm <- lm(
     formula = log_mean_confirmed_7d_total ~ poly(never_rarely_mask, 3)
     + poly(retail_and_recreation_percent_change_from_baseline, 3)
-    + poly(workplaces_percent_change_from_baseline, 3)
-    + poly(percent_uninsured, 3) 
-    + poly(percent_non_hispanic_white, 3)
-    + poly(per_capita_income, 3) 
-    + poly(percent_65_and_over, 3)
-    + poly(ELEV_M, 3) 
-    + poly(mean_temp_15d_avg, 3)
-    # + retail_and_recreation_percent_change_from_baseline:workplaces_percent_change_from_baseline
-    + .^2, # encodes all interaction terms
+        + poly(workplaces_percent_change_from_baseline, 3)
+        + poly(percent_uninsured, 3)
+        + poly(percent_non_hispanic_white, 3)
+        + poly(per_capita_income, 3)
+        + poly(percent_65_and_over, 3)
+        + poly(ELEV_M, 3)
+        + poly(mean_temp_15d_avg, 3)
+        # + retail_and_recreation_percent_change_from_baseline:workplaces_percent_change_from_baseline
+        + .^2, # encodes all interaction terms
     data = dataset,
 )
 
 poly_bas <- bas.lm(
     formula = log_mean_confirmed_7d_total ~ poly(never_rarely_mask, 3)
     + poly(retail_and_recreation_percent_change_from_baseline, 3)
-    + poly(workplaces_percent_change_from_baseline, 3)
-    + poly(percent_uninsured, 3) 
-    + poly(percent_non_hispanic_white, 3)
-    + poly(per_capita_income, 3) 
-    + poly(percent_65_and_over, 3)
-    + poly(ELEV_M, 3) 
-    + poly(mean_temp_15d_avg, 3)
-    + .^2,
+        + poly(workplaces_percent_change_from_baseline, 3)
+        + poly(percent_uninsured, 3)
+        + poly(percent_non_hispanic_white, 3)
+        + poly(per_capita_income, 3)
+        + poly(percent_65_and_over, 3)
+        + poly(ELEV_M, 3)
+        + poly(mean_temp_15d_avg, 3)
+        + .^2,
     data = dataset,
     method = "MCMC",
     prior = "JZS",
@@ -167,11 +169,11 @@ poly_bas <- bas.lm(
 #     formula = log_mean_confirmed_7d_total ~ poly(never_rarely_mask, 3)
 #     + poly(retail_and_recreation_percent_change_from_baseline, 3)
 #     + poly(workplaces_percent_change_from_baseline, 3)
-#     + poly(percent_uninsured, 3) 
+#     + poly(percent_uninsured, 3)
 #     + poly(percent_non_hispanic_white, 3)
-#     + poly(per_capita_income, 3) 
+#     + poly(per_capita_income, 3)
 #     + poly(percent_65_and_over, 3)
-#     + poly(ELEV_M, 3) 
+#     + poly(ELEV_M, 3)
 #     + poly(mean_temp_15d_avg, 3)
 #     + stay_at_home + log_population_density_per_sqmi,
 #     data = dataset,

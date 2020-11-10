@@ -1,33 +1,17 @@
 model {
 	# Likelihood
 	for (i in 1:N) {
-	    cases[i] ~ dnorm(b0 + b1 * pow(work[i], 2) + b2 * pow(work[i], 3) + b3 * stay[i] 
-	                        + b4 * pop[i] + b5 * insur[i] + b7 * pow(nonhis[i], 1) + b8 * pow(nonhis[i], 2)
-	                        + b8 * pow(nonhis[i], 3) + b9 * older[i] + b10 * stay[i] * insur[i]
-	                        + b11 * stay[i] * nonhis[i] + b12 * insur[i] * nonhis[i]
-	                        + b13 * nonhis[i] * older[i] + b14 * pop[i] * income[i]
-	                        + b15 * older[i] * temp[i] + b16 * pop[i] * elev[i], tau)
+	   y[i] ~ dnorm(mu[i], tau)
+	   mu[i] <- beta0 + inprod(beta[], x[i,])
 	}
 	
 	# Priors
-	tau ~ dgamma(0.1, 0.1)
+	tau ~ dgamma(0.5, 0.1)
 	sigma <- 1/sqrt(tau)
 	
-	b0 ~ dnorm(0, 0.001)
-	b1 ~ dnorm(0, 0.001)
-	b2 ~ dnorm(0, 0.001)
-	b3 ~ dnorm(0, 0.001)
-	b4 ~ dnorm(0, 0.001)
-	b5 ~ dnorm(0, 0.001)
-	b6 ~ dnorm(0, 0.001)
-	b7 ~ dnorm(0, 0.001)
-	b8 ~ dnorm(0, 0.001)
-	b9 ~ dnorm(0, 0.001)
-	b10 ~ dnorm(0, 0.001)
-	b11 ~ dnorm(0, 0.001)
-	b12 ~ dnorm(0, 0.001)
-	b13 ~ dnorm(0, 0.001)
-	b14 ~ dnorm(0, 0.001)
-	b15 ~ dnorm(0, 0.001)
-	b16 ~ dnorm(0, 0.001)
+	beta0 ~ dnorm(1, 0.001)
+	
+	for (i in 1:K) {
+	    beta[i] ~ dnorm(1, 0.001)
+	}
 }

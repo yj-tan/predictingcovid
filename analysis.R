@@ -43,16 +43,16 @@ inter_1o_bas <- bas.lm(
 diff_inter_1o_bas <- bas.lm(
     formula = log_mean_confirmed_7d_diff ~ poly(never_rarely_mask, 3)
     + poly(retail_and_recreation_percent_change_from_baseline, 3)
-    + poly(workplaces_percent_change_from_baseline, 3)
-    + stay_at_home
-    + log_population_density_per_sqmi
-    + poly(percent_uninsured, 3)
-    + poly(percent_non_hispanic_white, 3)
-    + poly(per_capita_income, 3)
-    + poly(percent_65_and_over, 3)
-    + poly(ELEV_M, 3)
-    + poly(mean_temp_15d_avg)
-    + ((.)^2 - .),
+        + poly(workplaces_percent_change_from_baseline, 3)
+        + stay_at_home
+        + log_population_density_per_sqmi
+        + poly(percent_uninsured, 3)
+        + poly(percent_non_hispanic_white, 3)
+        + poly(per_capita_income, 3)
+        + poly(percent_65_and_over, 3)
+        + poly(ELEV_M, 3)
+        + poly(mean_temp_15d_avg)
+        + ((.)^2 - .),
     data = diff_dataset,
     method = "MCMC",
     prior = "JZS",
