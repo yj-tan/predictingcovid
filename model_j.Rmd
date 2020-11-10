@@ -79,6 +79,9 @@ final_diff_cases2 <- clean %>%
     select(log_mean_confirmed_7d_diff, log_mean_confirmed_7d_total, everything())
 # saveRDS(final_diff_cases, paste(HOME, 'final_logdiffcases_dat.rds', sep='/'))
 # write_csv(final_diff_cases, paste(HOME, 'final_logdiffcases_dat.csv', sep='/'))
+
+saveRDS(final_diff_cases2, paste(HOME, 'final_logdiffcaseswtotal_dat.rds', sep='/'))
+write_csv(final_diff_cases2, paste(HOME, 'final_logdiffcaseswtotal_dat.csv', sep='/'))
 ```
 
 

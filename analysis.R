@@ -181,21 +181,21 @@ difflm2 <- lm(log_mean_confirmed_7d_diff ~
 ### smaller 
 smaller_bas <- bas.lm(
     formula =
-        log_mean_confirmed_7d_total ~
-        poly(workplaces_percent_change_from_baseline, 3)
-        + stay_at_home
-            + log_population_density_per_sqmi
-            + percent_uninsured
-            + poly(percent_non_hispanic_white, 3)
-            + percent_65_and_over
-            + stay_at_home:percent_uninsured
-            + stay_at_home:percent_non_hispanic_white
-            + percent_uninsured:percent_non_hispanic_white
-            + percent_non_hispanic_white:percent_65_and_over
-            + log_population_density_per_sqmi:per_capita_income
-            + percent_65_and_over:mean_temp_15d_avg
-            + log_population_density_per_sqmi:ELEV_M,
-    data = dataset,
+        log_mean_confirmed_7d_diff ~ 
+        I(never_rarely_mask^2)
+    + I(never_rarely_mask^3)
+    + workplaces_percent_change_from_baseline
+    + log_mean_confirmed_7d_total
+    + I(percent_non_hispanic_white^2)
+    + I(mean_temp_15d_avg^2)
+    + log_mean_confirmed_7d_total:workplaces_percent_change_from_baseline
+    + log_mean_confirmed_7d_total:percent_uninsured
+    + log_mean_confirmed_7d_total:mean_temp_15d_avg
+    + stay_at_home:ELEV_M
+    + percent_uninsured:percent_65_and_over
+    + percent_uninsured:ELEV_M
+    + log_population_density_per_sqmi:percent_non_hispanic_white,
+    data = diff_dataset2,
     method = "MCMC",
     prior = "JZS",
     update = 100,
@@ -211,7 +211,7 @@ plot(confint(coef_smaller_bas))
 diagnostics(coef_smaller_bas)
 
 # posterior predictive checks
-BPM <- predict(smaller_bas, estimator = "BPM", se.fit = TRUE)
+BPM <- predict(diff_inter_1o_bas2, estimator = "BPM", se.fit = TRUE)
 conf.fit <- confint(BPM, parm = "mean")
 conf.pred <- confint(BPM, parm = "pred")
 plot(conf.fit)
